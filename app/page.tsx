@@ -1,65 +1,55 @@
-import Image from "next/image";
+import Link from 'next/link';
+import Image from 'next/image';
+import { getBaseUrl } from '@/app/utils/baseUrl';
 
-export default function Home() {
+async function getPosts() {
+  const res = await fetch(`${getBaseUrl()}/api/posts`, { cache: 'no-store' });
+  if (!res.ok) return [] as any[];
+  const data = await res.json();
+  return data.posts as any[];
+}
+
+function formatDate(d?: string | null) {
+  if (!d) return '';
+  const date = new Date(d);
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+export default async function Home() {
+  const posts = await getPosts();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold tracking-tight">Your UK Travel Stories</h1>
+        <p className="text-zinc-600">Add entries from London, Edinburgh, the Lake District, and more.</p>
+      </div>
+
+      {posts.length === 0 && (
+        <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center text-zinc-600">
+          No posts yet. Click "New Post" to add your first story.
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      )}
+
+      <ul className="grid gap-6 sm:grid-cols-2">
+        {posts.map((post) => (
+          <li key={post.slug} className="overflow-hidden rounded-xl border border-zinc-200 bg-white hover:shadow-sm transition-shadow">
+            <Link href={`/posts/${post.slug}`} className="block">
+              {post.cover_image_url ? (
+                <div className="relative h-40 w-full">
+                  <Image src={post.cover_image_url} alt={post.title} fill className="object-cover" />
+                </div>
+              ) : (
+                <div className="h-40 w-full bg-zinc-100" />
+              )}
+              <div className="p-4 space-y-1">
+                <h3 className="text-lg font-medium leading-snug line-clamp-2">{post.title}</h3>
+                <p className="text-sm text-zinc-600">{post.city ? `${post.city}, ` : ''}{post.country} • {formatDate(post.visited_on)}</p>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
