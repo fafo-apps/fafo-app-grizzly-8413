@@ -1,4 +1,3 @@
-// utils/pool.ts
 import { Pool } from "pg";
 
 declare global {
@@ -6,17 +5,23 @@ declare global {
 }
 
 if (!global._pool) {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Disable SSL verification in development
+  if (!isProduction) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  }
+
   global._pool = new Pool({
     connectionString: process.env.SUPABASE_DB_URL,
     max: 5,
     idleTimeoutMillis: 10_000,
     connectionTimeoutMillis: 5_000,
     ssl: {
-      rejectUnauthorized: false,
-    },
+      rejectUnauthorized: isProduction
+    }
   });
 
-  // 👇 Force schema explicitly after connection
   const schema = process.env.SUPABASE_SCHEMA;
   global._pool.on('connect', (client) => {
     client.query(`SET search_path TO ${schema}, public;`).catch(console.error);

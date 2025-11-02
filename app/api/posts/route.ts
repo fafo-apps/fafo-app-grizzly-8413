@@ -12,9 +12,10 @@ function slugify(input: string) {
 
 export async function GET() {
   try {
+    const schema = process.env.SUPABASE_SCHEMA || 'app_19';
     const { rows } = await pool.query(
       `SELECT id, title, slug, excerpt, city, country, visited_on, cover_image_url, created_at
-       FROM posts
+       FROM ${schema}.posts
        WHERE is_published = TRUE
        ORDER BY visited_on DESC NULLS LAST, created_at DESC`
     );
@@ -27,6 +28,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const schema = process.env.SUPABASE_SCHEMA || 'app_19';
     const body = await req.json();
     const {
       title,
@@ -49,9 +51,9 @@ export async function POST(req: NextRequest) {
 
     const insert = async (trySlug: string) => {
       const { rows } = await pool.query(
-        `INSERT INTO posts (title, slug, excerpt, content, city, country, visited_on, cover_image_url, is_published)
+        `INSERT INTO ${schema}.posts (title, slug, excerpt, content, city, country, visited_on, cover_image_url, is_published)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         RETURNING id, title, slug, excerpt, city, country, visited_on, cover_image_url, created_at` ,
+         RETURNING id, title, slug, excerpt, city, country, visited_on, cover_image_url, created_at`,
         [title, trySlug, excerpt ?? null, content, city ?? null, country, visited_on ?? null, cover_image_url ?? null, is_published]
       );
       return rows[0];
@@ -61,7 +63,6 @@ export async function POST(req: NextRequest) {
       const created = await insert(slug);
       return NextResponse.json({ post: created }, { status: 201 });
     } catch (e: any) {
-      // 23505 = unique_violation
       if (e?.code === '23505') {
         const uniqueSlug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
         const created = await insert(uniqueSlug);

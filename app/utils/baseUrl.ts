@@ -1,8 +1,15 @@
-// app/utils/baseUrl.ts
+// utils/baseUrl.ts
 export function getBaseUrl() {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`) ||
-    'http://localhost:3000'
-  );
+  if (typeof window !== 'undefined') {
+    // Client-side
+    return '';
+  }
+
+  // ✅ In Vercel/production — prefer internal fetches
+  if (process.env.VERCEL) {
+    return ''; // relative path allows Next.js to handle it internally (no network hop)
+  }
+
+  // ✅ In local dev (SSR needs full URL)
+  return 'http://localhost:3000';
 }
