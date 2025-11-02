@@ -7,7 +7,8 @@ export function getBaseUrl() {
 
   // ✅ In Vercel/production — prefer internal fetches
   if (process.env.VERCEL) {
-    return ''; // relative path allows Next.js to handle it internally (no network hop)
+    const vercelUrl = process.env.VERCEL_URL;
+    if (vercelUrl) return `https://${vercelUrl}`;
   }
 
   // ✅ In local dev (SSR needs full URL)
