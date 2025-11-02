@@ -8,9 +8,11 @@ export default function NewPostPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit(formData: FormData) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setLoading(true);
     setError(null);
+    const formData = new FormData(e.currentTarget);
     const payload = {
       title: formData.get('title'),
       city: formData.get('city') || null,
@@ -44,7 +46,7 @@ export default function NewPostPage() {
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
       )}
 
-      <form action={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label className="mb-1 block text-sm font-medium">Title</label>
           <input name="title" required placeholder="Day in London: Borough Market & Thames Walk" className="w-full rounded-md border border-zinc-300 px-3 py-2" />

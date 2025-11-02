@@ -3,13 +3,14 @@ import { pool } from '@/app/utils/pool';
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { slug: string } }
+  context: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await context.params;
     const { rows } = await pool.query(
       `SELECT id, title, slug, excerpt, content, city, country, visited_on, cover_image_url, created_at, updated_at
        FROM posts WHERE slug = $1 AND is_published = TRUE LIMIT 1`,
-      [params.slug]
+      [slug]
     );
     const post = rows[0];
     if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -22,9 +23,10 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { slug: string } }
+  context: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const { slug } = await context.params;
     const body = await req.json();
     const { title, excerpt, content, city, country, visited_on, cover_image_url, is_published } = body ?? {};
 
@@ -41,7 +43,7 @@ export async function PUT(
         updated_at = now()
        WHERE slug = $9
        RETURNING id, title, slug, excerpt, content, city, country, visited_on, cover_image_url, created_at, updated_at`,
-      [title ?? null, excerpt ?? null, content ?? null, city ?? null, country ?? null, visited_on ?? null, cover_image_url ?? null, is_published ?? null, params.slug]
+      [title ?? null, excerpt ?? null, content ?? null, city ?? null, country ?? null, visited_on ?? null, cover_image_url ?? null, is_published ?? null, slug]
     );
 
     const post = rows[0];
@@ -55,10 +57,11 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { slug: string } }
+  context: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { rowCount } = await pool.query(`DELETE FROM posts WHERE slug = $1`, [params.slug]);
+    const { slug } = await context.params;
+    const { rowCount } = await pool.query(`DELETE FROM posts WHERE slug = $1`, [slug]);
     if (!rowCount) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return new NextResponse(null, { status: 204 });
   } catch (err) {
